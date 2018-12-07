@@ -21,24 +21,25 @@ def gce(cred, env, private_data_dir):
         'type': 'service_account',
         'private_key': decrypt_field(cred, 'ssh_key_data'),
         'client_email': cred.username,
-        'project_id': cred.project
+        'project_id': cred.project,
+        # need token_uri for inventory plugins
+        # should this really be hard coded? Good question.
+        'token_uri': 'https://accounts.google.com/o/oauth2/token'
     }
-    handle, path = tempfile.mkstemp(dir=private_data_dir)
-    f = os.fdopen(handle, 'w')
-    json.dump(json_cred, f)
-    f.close()
+    path = os.path.join(private_data_dir, 'creds.json')
+    with open(path, 'w') as f:
+        json.dump(json_cred, f, indent=2)
     os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
     env['GCE_CREDENTIALS_FILE_PATH'] = path
 
 
 def azure_rm(cred, env, private_data_dir):
+    env['AZURE_SUBSCRIPTION_ID'] = cred.subscription
     if len(cred.client) and len(cred.tenant):
         env['AZURE_CLIENT_ID'] = cred.client
         env['AZURE_SECRET'] = decrypt_field(cred, 'secret')
         env['AZURE_TENANT'] = cred.tenant
-        env['AZURE_SUBSCRIPTION_ID'] = cred.subscription
     else:
-        env['AZURE_SUBSCRIPTION_ID'] = cred.subscription
         env['AZURE_AD_USER'] = cred.username
         env['AZURE_PASSWORD'] = decrypt_field(cred, 'password')
     if cred.inputs.get('cloud_environment', None):
