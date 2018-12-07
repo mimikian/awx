@@ -81,22 +81,30 @@ class AnsibleInventoryLoader(object):
 
     def build_env(self):
         env = dict(os.environ.items())
-        env['VIRTUAL_ENV'] = settings.ANSIBLE_VENV_PATH
-        env['PATH'] = os.path.join(settings.ANSIBLE_VENV_PATH, "bin") + ":" + env['PATH']
+        if 'VIRTUAL_ENV' not in env:
+            env['VIRTUAL_ENV'] = settings.ANSIBLE_VENV_PATH
+            env['PATH'] = os.path.join(settings.ANSIBLE_VENV_PATH, "bin") + ":" + env['PATH']
         # Set configuration items that should always be used for updates
         for key, value in STANDARD_INVENTORY_UPDATE_ENV.items():
             if key not in env:
                 env[key] = value
         venv_libdir = os.path.join(settings.ANSIBLE_VENV_PATH, "lib")
-        env.pop('PYTHONPATH', None)  # default to none if no python_ver matches
-        if os.path.isdir(os.path.join(venv_libdir, "python2.7")):
-            env['PYTHONPATH'] = os.path.join(venv_libdir, "python2.7", "site-packages") + ":"
+        # TODO: python3???
+        if 'PYTHONPATH' not in env:
+            env.pop('PYTHONPATH', None)  # default to none if no python_ver matches
+            if os.path.isdir(os.path.join(venv_libdir, "python2.7")):
+                env['PYTHONPATH'] = os.path.join(venv_libdir, "python2.7", "site-packages") + ":"
         return env
 
     def get_base_args(self):
         # get ansible-inventory absolute path for running in bubblewrap/proot, in Popen
         abs_ansible_inventory = shutil.which('ansible-inventory')
-        bargs= [abs_ansible_inventory, '-i', self.source]
+        # NOTE:  why do we add "python" to the start of these args?
+        # the script that runs ansible-inventory specifies a python interpreter
+        # that makes no sense in light of the fact that we put all the dependencies
+        # inside of /venv/ansible, so we override the specified interpreter
+        # https://github.com/ansible/ansible/issues/50714
+        bargs= ['python', abs_ansible_inventory, '-i', self.source]
         logger.debug('Using base command: {}'.format(' '.join(bargs)))
         return bargs
 
