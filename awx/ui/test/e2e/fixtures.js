@@ -9,6 +9,8 @@ import {
 
 const session = `e2e-${uuid().substr(0, 8)}`;
 const store = {};
+const scm_url = 'https://github.com/ansible/ansible-tower-samples';
+const scm_type = 'git';
 
 /* Utility function for accessing awx resources. This includes resources like
  * users, organizations, and job templates. Retrieves the end point, and creates
@@ -248,13 +250,17 @@ const getNotificationTemplate = (namespace = session) => getOrganization(namespa
  *
  * @param[namespace=session] - A unique name prefix for the host.
  */
-const getProject = (namespace = session) => getOrganization(namespace)
-    .then(organization => getOrCreate(`/organizations/${organization.id}/projects/`, {
+const getProject = (
+    namespace = session,
+    scm_url = 'https://github.com/ansible/ansible-tower-samples',
+    scm_type = 'git'
+) => getOrganization(namespace)
+    .then( organization => getOrCreate(`/organizations/${organization.id}/projects/`, {
         name: `${namespace}-project`,
         description: namespace,
         organization: organization.id,
-        scm_url: 'https://github.com/ansible/ansible-tower-samples',
-        scm_type: 'git'
+        scm_url: `${scm_url}`,
+        scm_type: `${scm_type}`
     }));
 
 const waitForJob = endpoint => {
@@ -299,7 +305,7 @@ const getUpdatedProject = (namespace = session) => getProject(namespace)
  *
  * @param[namespace=session] - A unique name prefix for the job template.
  */
-const getJobTemplate = (namespace = session) => {
+const getJobTemplate = (namespace = session, playbook = 'hello_world.yml') => {
     const promises = [
         getInventory(namespace),
         getAdminMachineCredential(namespace),
@@ -313,7 +319,7 @@ const getJobTemplate = (namespace = session) => {
             inventory: inventory.id,
             credential: credential.id,
             project: project.id,
-            playbook: 'hello_world.yml',
+            playbook: `${playbook}`,
         }));
 };
 
