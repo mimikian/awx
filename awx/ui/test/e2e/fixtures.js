@@ -9,8 +9,6 @@ import {
 
 const session = `e2e-${uuid().substr(0, 8)}`;
 const store = {};
-const scm_url = 'https://github.com/ansible/ansible-tower-samples';
-const scm_type = 'git';
 
 /* Utility function for accessing awx resources. This includes resources like
  * users, organizations, and job templates. Retrieves the end point, and creates
@@ -249,6 +247,8 @@ const getNotificationTemplate = (namespace = session) => getOrganization(namespa
  * created as well.
  *
  * @param[namespace=session] - A unique name prefix for the host.
+ * @param[scm_url] - The url of the repository.
+ * @param[scm_type] - The type of scm (git, etc.)
  */
 const getProject = (
     namespace = session,

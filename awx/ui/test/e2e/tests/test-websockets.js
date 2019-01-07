@@ -18,14 +18,13 @@ module.exports = {
     before: (client, done) => {
         const resources = [
             getInventorySource('test-websockets'),
-            getJobTemplate('test-websockets', 'debug.yml'),
-            getJobTemplate('test-websockets', 'fail_unless.yml'),
-            getProject(),
+            getProject('test-websockets', 'https://github.com/ansible/test-playbooks'),
             getWorkflowTemplate('test-websockets'),
+            getJobTemplate('test-websockets', 'debug.yml')
         ];
         Promise.all(resources)
-            .then(([inventory, success_job, fail_job, project, workflow]) => {
-                data = { inventory, success_job, fail_job, project, workflow };
+            .then(([inventory, project, wf, job]) => {
+                data = { inventory, project, wf, job };
                 done();
             });
         client
