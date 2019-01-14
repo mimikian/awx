@@ -1,6 +1,5 @@
 import {
     getInventorySource,
-    getJobTemplate,
     getProject,
     getWorkflowTemplate,
     getJob
@@ -13,50 +12,69 @@ const dashboard = '//at-side-nav-item[contains(@name, "DASHBOARD")]';
 const sparklineIcon = '//div[contains(@class, "SmartStatus-iconContainer")]';
 const running = '//div[@ng-show="job.status === \'running\'"]';
 const success = '//div[@ng-show="job.status === \'successful\'"]';
+const failed = '//div[@ng-show="job.status === \'failed\'"]';
 
 module.exports = {
+
     before: (client, done) => {
+
         const resources = [
             getInventorySource('test-websockets'),
             getProject('test-websockets', 'https://github.com/ansible/test-playbooks'),
-            getWorkflowTemplate('test-websockets'),
-            getJobTemplate('test-websockets', 'debug.yml')
+            getJob('test-websockets', 'debug.yml'),
+            getJob('test-websockets', 'fail_unless.yml', 'test-websockets-fail'),
+            getWorkflowTemplate('test-websockets')
         ];
+
         Promise.all(resources)
-            .then(([inventory, project, wf, job]) => {
-                data = { inventory, project, wf, job };
+            .then(([inventory, project, jt, failjt, wfjt]) => {
+                data = { inventory, project, jt, failjt, wfjt };
                 done();
             });
+
         client
+            .pause(10000)
             .login()
             .waitForAngular()
             .resizeWindow(1200, 1000);
     },
-    'Test job template status updates for a successful job on dashboard': client => {
+
+    'Verify that job progress updates correctly for a normal job on the dashboard.': client => {
+
         client.useXpath().findThenClick(dashboard);
-        getJob('test-websockets'); // Automatically starts job
+        getJob('test-websockets', 'debug.yml'); // launches job
+
         client.expect.element(spinny).to.not.be.visible.before(5000);
         client.expect.element(sparklineIcon + '[1]' + running)
             .to.be.visible.before(5000);
         client.expect.element(spinny).to.not.be.visible.before(5000);
+
         // wait for the test job to complete. element goes stale if a timeout is used
-        client.pause(20000);
+        client.pause(10000);
         client.expect.element(sparklineIcon + '[1]' + success)
             .to.have.attribute('class').which.does.not.contain('ng-hide').after(5000);
+
     },
-    'Test job template status updates for a failed job on dashboard': client => {
-        client.useXpath().findThenClick(dashboard);
-        getJob('test-websockets'); // Automatically starts job
+
+    'Verify that job progress updates correctly for a failed job on the dashboard.': client => {
+
+        getJob('test-websockets', 'fail_unless.yml', 'test-websockets-fail');
+
         client.expect.element(spinny).to.not.be.visible.before(5000);
         client.expect.element(sparklineIcon + '[1]' + running)
             .to.be.visible.before(5000);
         client.expect.element(spinny).to.not.be.visible.before(5000);
+
         // wait for the test job to complete. element goes stale if a timeout is used
-        client.pause(20000);
-        client.expect.element(sparklineIcon + '[1]' + success)
+        client.pause(10000);
+        client.expect.element(sparklineIcon + '[1]' + failed)
             .to.have.attribute('class').which.does.not.contain('ng-hide').after(5000);
+
     },
+
     after: client => {
+
         client.end();
+
     }
 };

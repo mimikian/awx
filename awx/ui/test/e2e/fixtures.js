@@ -303,9 +303,14 @@ const getUpdatedProject = (namespace = session) => getProject(namespace)
  * name prefix. This function also runs getOrCreate for an inventory,
  * credential, and project with the same prefix.
  *
- * @param[namespace=session] - A unique name prefix for the job template.
- */
-const getJobTemplate = (namespace = session, playbook = 'hello_world.yml') => {
+ * @param {string} [namespace=session] - Name prefix for associated dependencies.
+ * @param {string} [playbook=hello_world.yml] - Playbook for the job template.
+ * @param {string} [name=`${namespace}-job-template`] - Unique name prefix for the job template.
+ * */
+const getJobTemplate = (
+    namespace=session,
+    playbook='hello_world.yml',
+    name=`${namespace}-job-template`) => {
     const promises = [
         getInventory(namespace),
         getAdminMachineCredential(namespace),
@@ -314,7 +319,7 @@ const getJobTemplate = (namespace = session, playbook = 'hello_world.yml') => {
 
     return Promise.all(promises)
         .then(([inventory, credential, project]) => getOrCreate('/job_templates/', {
-            name: `${namespace}-job-template`,
+            name: `${name}`,
             description: namespace,
             inventory: inventory.id,
             credential: credential.id,
@@ -325,9 +330,14 @@ const getJobTemplate = (namespace = session, playbook = 'hello_world.yml') => {
 
 /* Similar to getJobTemplate, except that it also launches the job.
  *
- * @param[namespace=session] - A unique name prefix for the host.
+ * @param[namespace] - A unique name prefix for the job and its dependencies.
+ * @param[playbook] - The playbook file to be run by the job template.
+ * @param[name] - A unique name for the job template.
  */
-const getJob = (namespace = session) => getJobTemplate(namespace)
+const getJob = (
+    namespace = session,
+    playbook='hello_world.yml',
+    name=`${namespace}-job-template`) => getJobTemplate(namespace, playbook, name)
     .then(template => {
         const launchURL = template.related.launch;
         return post(launchURL, {}).then(response => {
@@ -404,23 +414,14 @@ const getAuditor = (namespace = session) => getOrganization(namespace)
  * name prefix. If an organization does not exist with the same prefix,
  * it is also created.
  *
- * @param[namespace=session] - A unique name prefix for the user.
+ * @param[namespace=session] - A unique name prefix for the user's organization.
+ * @param[username] - A unique name for the user.
  */
-const getUser = (namespace = session) => getOrganization(namespace)
+const getUser = (
+    namespace = session,
+    username =`user-${uuid().substr(0, 8)}`) => getOrganization(namespace)
     .then(organization => getOrCreate(`/organizations/${organization.id}/users/`, {
-        username: `user-${uuid().substr(0, 8)}`,
-        organization: organization.id,
-        first_name: 'firstname',
-        last_name: 'lastname',
-        email: 'null@ansible.com',
-        is_superuser: false,
-        is_system_auditor: false,
-        password: AWX_E2E_PASSWORD
-    }, ['username']));
-
-const getUserExact = (namespace = session, name) => getOrganization(namespace)
-    .then(organization => getOrCreate(`/organizations/${organization.id}/users/`, {
-        username: `${name}`,
+        username: `${username}`,
         organization: organization.id,
         first_name: 'firstname',
         last_name: 'lastname',
@@ -535,6 +536,5 @@ module.exports = {
     getTeam,
     getUpdatedProject,
     getUser,
-    getUserExact,
     getWorkflowTemplate,
 };
