@@ -81,19 +81,17 @@ class AnsibleInventoryLoader(object):
 
     def build_env(self):
         env = dict(os.environ.items())
-        if 'VIRTUAL_ENV' not in env:
-            env['VIRTUAL_ENV'] = settings.ANSIBLE_VENV_PATH
-            env['PATH'] = os.path.join(settings.ANSIBLE_VENV_PATH, "bin") + ":" + env['PATH']
+        env['VIRTUAL_ENV'] = settings.ANSIBLE_VENV_PATH
+        env['PATH'] = os.path.join(settings.ANSIBLE_VENV_PATH, "bin") + ":" + env['PATH']
         # Set configuration items that should always be used for updates
         for key, value in STANDARD_INVENTORY_UPDATE_ENV.items():
             if key not in env:
                 env[key] = value
         venv_libdir = os.path.join(settings.ANSIBLE_VENV_PATH, "lib")
         # TODO: python3???
-        if 'PYTHONPATH' not in env:
-            env.pop('PYTHONPATH', None)  # default to none if no python_ver matches
-            if os.path.isdir(os.path.join(venv_libdir, "python2.7")):
-                env['PYTHONPATH'] = os.path.join(venv_libdir, "python2.7", "site-packages") + ":"
+        env.pop('PYTHONPATH', None)  # default to none if no python_ver matches
+        if os.path.isdir(os.path.join(venv_libdir, "python2.7")):
+            env['PYTHONPATH'] = os.path.join(venv_libdir, "python2.7", "site-packages") + ":"
         return env
 
     def get_base_args(self):
