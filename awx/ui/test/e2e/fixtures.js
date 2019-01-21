@@ -247,20 +247,20 @@ const getNotificationTemplate = (namespace = session) => getOrganization(namespa
  * created as well.
  *
  * @param[namespace=session] - A unique name prefix for the host.
- * @param[scm_url] - The url of the repository.
- * @param[scm_type] - The type of scm (git, etc.)
+ * @param[scmUrl] - The url of the repository.
+ * @param[scmType] - The type of scm (git, etc.)
  */
 const getProject = (
     namespace = session,
-    scm_url = 'https://github.com/ansible/ansible-tower-samples',
-    scm_type = 'git'
+    scmUrl = 'https://github.com/ansible/ansible-tower-samples',
+    scmType = 'git'
 ) => getOrganization(namespace)
-    .then( organization => getOrCreate(`/organizations/${organization.id}/projects/`, {
+    .then(organization => getOrCreate(`/organizations/${organization.id}/projects/`, {
         name: `${namespace}-project`,
         description: namespace,
         organization: organization.id,
-        scm_url: `${scm_url}`,
-        scm_type: `${scm_type}`
+        scm_url: `${scmUrl}`,
+        scm_type: `${scmType}`
     }));
 
 const waitForJob = endpoint => {
@@ -308,9 +308,10 @@ const getUpdatedProject = (namespace = session) => getProject(namespace)
  * @param {string} [name=`${namespace}-job-template`] - Unique name prefix for the job template.
  * */
 const getJobTemplate = (
-    namespace=session,
-    playbook='hello_world.yml',
-    name=`${namespace}-job-template`) => {
+    namespace = session,
+    playbook = 'hello_world.yml',
+    name = `${namespace}-job-template`
+) => {
     const promises = [
         getInventory(namespace),
         getAdminMachineCredential(namespace),
@@ -336,8 +337,9 @@ const getJobTemplate = (
  */
 const getJob = (
     namespace = session,
-    playbook='hello_world.yml',
-    name=`${namespace}-job-template`) => getJobTemplate(namespace, playbook, name)
+    playbook = 'hello_world.yml',
+    name = `${namespace}-job-template`
+) => getJobTemplate(namespace, playbook, name)
     .then(template => {
         const launchURL = template.related.launch;
         return post(launchURL, {}).then(response => {
@@ -419,7 +421,8 @@ const getAuditor = (namespace = session) => getOrganization(namespace)
  */
 const getUser = (
     namespace = session,
-    username =`user-${uuid().substr(0, 8)}`) => getOrganization(namespace)
+    username = `user-${uuid().substr(0, 8)}`
+) => getOrganization(namespace)
     .then(organization => getOrCreate(`/organizations/${organization.id}/users/`, {
         username: `${username}`,
         organization: organization.id,
