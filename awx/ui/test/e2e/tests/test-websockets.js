@@ -17,12 +17,11 @@ const successfulJt = '//a[contains(text(), "test-websockets-successful")]/../..'
 const failedJt = '//a[contains(text(), "test-websockets-failed")]/../..';
 const sparklineIcon = '//div[contains(@class, "SmartStatus-iconContainer")]';
 
-// Sparkline icon statuses. Running is blinking green, successful is green, failed is red.
+// Sparkline icon statuses.
+// Running is blinking green, successful is green, fail/error/cancellation is red.
 const running = '//div[@ng-show="job.status === \'running\'"]';
-const success = '//div[@ng-show="job.status === \'successful\'"]';
-
-// The UI element for failed/error/canceled jobs is the same.
-const failedErrorCanceled = '//div[contains(@ng-show, "job.status === \'failed\'")]';
+const success = '//div[contains(@class, "SmartStatus-iconIndicator--success")]';
+const fail = '//div[contains(@class, "SmartStatus-iconIndicator--failed")]';
 
 module.exports = {
 
@@ -56,10 +55,9 @@ module.exports = {
         client.expect.element(`${sparklineIcon}[1]${running}`)
             .to.be.visible.before(5000);
 
-        // explicit wait, element goes stale if a timeout is used due to DOM updates
-        client.pause(20000);
+        // Allow a maximum amount of 30 seconds for the job to complete.
         client.expect.element(`${successfulJt}${sparklineIcon}[1]${success}`)
-            .to.have.attribute('class').which.does.not.contain('ng-hide').after(10000);
+            .to.be.present.after(20000);
     },
 
     'Test job template status updates for a failed job on dashboard': client => {
@@ -70,10 +68,9 @@ module.exports = {
         client.expect.element(`${sparklineIcon}[1]${running}`)
             .to.be.visible.before(5000);
 
-        // explicit wait, element goes stale if a timeout is used due to DOM updates
-        client.pause(20000);
-        client.expect.element(`${failedJt}${sparklineIcon}[1]${failedErrorCanceled}`)
-            .to.have.attribute('class').which.does.not.contain('ng-hide').after(10000);
+        // Allow a maximum amount of 30 seconds for the job to complete.
+        client.expect.element(`${failedJt}${sparklineIcon}[1]${fail}`)
+            .to.be.present.after(20000);
     },
     after: client => {
         client.end();
